@@ -4,7 +4,9 @@ RUN apt-get update && apt-get install -y python python-pip
 
 RUN apt-get -y upgrade
 
-RUN pip install -r requirements.txt
+COPY requirements.txt /tmp/requirements.txt
+
+RUN pip install -r /tmp/requirements.txt
 
 COPY app.py /opt/
 

@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y python3 python3-pip
 
 RUN apt-get -y upgrade
 
-RUN pip3 install flask
+RUN pip3 install -r requirements.txt
 
 COPY app.py /opt/
 

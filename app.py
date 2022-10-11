@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from jinja2.utils import markupsafe
 
 app = Flask(__name__)
 

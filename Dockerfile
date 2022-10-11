@@ -6,9 +6,9 @@ RUN apt-get -y upgrade
 
 COPY requirements.txt /tmp/requirements.txt
 
-RUN pip3 install -r /tmp/requirements.txt
-
 RUN pip3 freeze > /tmp/requirements.txt
+
+RUN pip3 install -r /tmp/requirements.txt
 
 COPY app.py /opt/
 

@@ -3,5 +3,9 @@
 {% if color %}
   <h1>Hello {{ color }}!</h1>
 {% else %}
-  <h1>Hello, World!</h1>
+  {% if contents %}
+    <h1>Hello {{ contents }}!</h1>
+  {% else %}
+    <h1>Hello, World!</h1>
+  {% endif %}
 {% endif %}

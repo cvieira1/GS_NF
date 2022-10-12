@@ -2,6 +2,9 @@
 <title>Hello from Flask</title>
 {% if color %}
   <h1>Hello {{ color }}!</h1>
+  {% if contents %}
+    <h1>Hello {{ contents }}!</h1>
+  {% endif %}
 {% else %}
   {% if contents %}
     <h1>Hello {{ contents }}!</h1>

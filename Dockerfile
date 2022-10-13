@@ -1,9 +1,24 @@
-FROM python:3
+# Using official python runtime base image
+FROM python:3.9-slim
 
-COPY requirements.txt /tmp/requirements.txt
+# add curl for healthcheck
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install -r /tmp/requirements.txt
+# Set the application directory
+WORKDIR /app
 
-COPY app.py /opt/
+# Install our requirements.txt
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r requirements.txt
 
-ENTRYPOINT FLASK_APP=/opt/app.py flask run --host=0.0.0.0 --port=8080
+# Copy our code from the current folder to /app inside the container
+COPY . .
+
+# Make port 80 available for links and/or publish
+EXPOSE 8080
+
+# Define our command to be run when launching the container
+CMD ["gunicorn", "app:app", "-b", "0.0.0.0:8080", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]

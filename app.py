@@ -1,44 +1,51 @@
+from flask import Flask, render_template, request, make_response, g
+from redis import Redis
 import os
-from flask import Flask
-from flask import render_template
-from jinja2.utils import markupsafe
 import socket
 import random
-import os
+import json
+import logging
+
+option_a = os.getenv('OPTION_A', "Cats")
+option_b = os.getenv('OPTION_B', "Dogs")
+hostname = socket.gethostname()
 
 app = Flask(__name__)
 
-color_codes = {
-  "red": "#e74c3c",
-  "green": "#16a085",
-  "blue": "#2980b9",
-  "blue2": "#30336b",
-  "pink": "#be2edd",
-  "darkblue": "#130f40"  
-}
+gunicorn_error_logger = logging.getLogger('gunicorn.error')
+app.logger.handlers.extend(gunicorn_error_logger.handlers)
+app.logger.setLevel(logging.INFO)
 
-color = os.environ.get("APP_COLOR") or random.choice(["red", "green", "blue", "blue2", "pink", "darkblue"])
+def get_redis():
+    if not hasattr(g, 'redis'):
+        g.redis = Redis(host="redis", db=0, socket_timeout=5)
+    return g.redis
 
-@app.route("/")
-def main():
-  
-  print(color)
-  
-  return render_template("hello.html", name=socket.gethostname(), color=color_codes[color])
+@app.route("/", methods=['POST','GET'])
+def hello():
+    voter_id = request.cookies.get('voter_id')
+    if not voter_id:
+        voter_id = hex(random.getrandbits(64))[2:-1]
 
-@app.route("/color/<new_color>")
-def new_color(new_color):
+    vote = None
 
-  return render_template("hello.html", name=socket.gethostname(), color=color_codes[new_color])
+    if request.method == 'POST':
+        redis = get_redis()
+        vote = request.form['vote']
+        app.logger.info('Received vote for %s', vote)
+        data = json.dumps({'voter_id': voter_id, 'vote': vote})
+        redis.rpush('votes', data)
 
-@app.route("/read_file")
-def read_file():
-  
-  f = open("/data/testfile.txt")
-  contents = f.read()
+    resp = make_response(render_template(
+        'index.html',
+        option_a=option_a,
+        option_b=option_b,
+        hostname=hostname,
+        vote=vote,
+    ))
+    resp.set_cookie('voter_id', voter_id)
+    return resp
 
-  return render_template("hello.html", name=socket.gethostname(), contents=contents, color=color_codes[color])  
-  
+
 if __name__ == "__main__":
-  
-  app.run(host="0.0.0.0", port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)
